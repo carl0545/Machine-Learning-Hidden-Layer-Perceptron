@@ -6,6 +6,7 @@
 
 #include <iostream>
 #include <string>
+#include <math.h>
 #include "mat.h"
 
 using namespace std;
@@ -13,6 +14,10 @@ using namespace std;
 void setBasics(int*, int*, int*, int*); //Function reads in total inputs, rows and column for the matrix from stdin
 void setValuesf(Matrix*, bool); //Function sets the elements of the matrix from stdin
 void setTargetValues(Matrix*, Matrix); //Function grabs the target values from the training matrix and assigns them to the target matrix
+void neuralNetwork(Matrix, Matrix, int);//Multilayer Neural Network algorithm
+void setWeights(Matrix*);//Sets random values to the weight matrix
+double sigmoid(int);//sigmoid function for the neural network
+
 
 int main(){
 
@@ -46,7 +51,14 @@ int main(){
 
   setTargetValues(&target, train);
 
-  target.print();
+  ///Resize Training MATRIX
+  train.narrow(train_cols - target_cols);
+  train_cols = train.numCols();
+
+  //Normalize the training matrix to have input values between 0-1
+  train.normalizeCols();
+
+
 
 }
 
@@ -114,6 +126,42 @@ void setTargetValues(Matrix *target, Matrix training){
       target->set(r,c - starting_col, training.get(r,c));
     }
   }
+
+
+}
+
+/*
+*Assigns random numbers to the initial weight matrix
+*/
+void setWeights(Matrix *weights){
+
+  weights->rand(-.02,.05);
+
+}
+
+/*
+*sigmoid function for the Neural Network
+*/
+double sigmoid(int val){
+
+  return 1.0/(1.0 + exp(-4.0 * x));
+
+}
+
+/*
+*
+*/
+void neuralNetwork(Matrix train, Matrix target, int hidden){
+  Matrix weight1; //weight matrix between inputs and hidden nodes
+  Matrix weight2; //weight matrix between hidden nodes and output nodes
+
+  weight1 = new Matrix(train.numCols(), hidden);
+  weight2 = new Matrix(hidden, target.numCols());
+
+  setWeights(weight1);
+  setWeights(weight2);
+
+
 
 
 }

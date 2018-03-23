@@ -163,7 +163,7 @@ void neuralNetwork(Matrix train, Matrix target, int hidden){
   Matrix activations_h, activations_o;
 
   weight1 = new Matrix(train.numCols(), hidden);
-  weight2 = new Matrix(hidden, target.numCols());
+  weight2 = new Matrix(hidden + 1, target.numCols());
 
   setWeights(&weight1);
   setWeights(&weight2);
@@ -172,13 +172,14 @@ void neuralNetwork(Matrix train, Matrix target, int hidden){
     activations_h = train.dot(weight1);
     activations_h.map(sigmoid);
 
-    Matrix activationBias_h = new Matrix(activations_h.numCols()+1, activations_h.numRows());
+
+    Matrix activationBias_h = new Matrix(activations_h.numRows(), activations_h.numCols()+1);
     addBias(&activationBias_h, activations_h);
+
 
     activations_o = activationBias_h.dot(weight2);
     activations_o.map(sigmoid);
 
-    
 
 
   }

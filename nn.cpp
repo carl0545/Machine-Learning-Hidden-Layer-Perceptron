@@ -11,7 +11,7 @@
 
 using namespace std;
 
-const int TRAINING_ITERATIONS = 1000;
+const int TRAINING_ITERATIONS = 10000;
 const double ETA = .1;
 
 void setBasics(int*, int*, int*, int*); //Function reads in total inputs, rows and column for the matrix from stdin
@@ -22,7 +22,7 @@ void setWeights(Matrix*);//Sets random values to the weight matrix
 void addBias(Matrix* bias, Matrix original);//add a bias column to a matrix
 double sigmoid(int);//sigmoid function for the neural network
 double threshold(double val); //calculates whether to fire or not fire
-
+void printOutput(Matrix, Matrix);//print output in assignment format
 
 int main(){
 
@@ -209,7 +209,7 @@ void neuralNetwork(Matrix train, Matrix target, Matrix test, int hidden){
 
   Matrix newTest = Matrix(test);
 
-  newTest.normalizeCols();
+  test.normalizeCols();
 
   activations_h = test.dot(weight1);
   activations_h.map(sigmoid);
@@ -222,8 +222,7 @@ void neuralNetwork(Matrix train, Matrix target, Matrix test, int hidden){
 
   activations_o.map(threshold);
 
-  cout << "FINAL: " << endl;
-  activations_o.print();
+  printOutput(newTest, activations_o);
 
 
 
@@ -262,5 +261,26 @@ void addBias(Matrix* bias, Matrix original){
     }
   }
 
+
+}
+
+/*
+*Self made print function to match the neccesary required output template
+*for the assignment
+*/
+void printOutput(Matrix train, Matrix fin){
+
+ for(int r = 0; r < train.numRows(); r++){
+   for(int c = 0; c < train.numCols(); c++){
+     if(c == 0) continue;
+     printf ("%.2f", train.get(r,c));
+     cout << " ";
+   }
+   for(int c = 0; c < fin.numCols(); c++){
+     printf ("%.2f", fin.get(r,c));
+     cout << " ";
+   }
+   cout << endl;
+ }
 
 }

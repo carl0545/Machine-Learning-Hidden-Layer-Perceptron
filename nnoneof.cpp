@@ -276,10 +276,15 @@ void printOutput(Matrix train, Matrix fin){
      printf ("%.2f", train.get(r,c));
      cout << " ";
    }
+   int max = -10000;
+   int maxIndex = -1;
    for(int c = 0; c < fin.numCols(); c++){
-     printf ("%.2f", fin.get(r,c));
-     cout << " ";
+     if(fin.get(r,c) > max){
+       maxIndex = c;
+       max = fin.get(r,c);
+     }
    }
+   cout << maxIndex;
    cout << endl;
  }
 

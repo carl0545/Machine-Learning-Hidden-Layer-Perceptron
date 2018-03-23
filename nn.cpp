@@ -11,11 +11,15 @@
 
 using namespace std;
 
+const int TRAINING_ITERATIONS = 1;
+const double LEARNING_RATE = .1;
+
 void setBasics(int*, int*, int*, int*); //Function reads in total inputs, rows and column for the matrix from stdin
 void setValuesf(Matrix*, bool); //Function sets the elements of the matrix from stdin
 void setTargetValues(Matrix*, Matrix); //Function grabs the target values from the training matrix and assigns them to the target matrix
 void neuralNetwork(Matrix, Matrix, int);//Multilayer Neural Network algorithm
 void setWeights(Matrix*);//Sets random values to the weight matrix
+void addBias(Matrix* bias, Matrix original);//add a bias column to a matrix
 double sigmoid(int);//sigmoid function for the neural network
 
 
@@ -57,6 +61,8 @@ int main(){
 
   //Normalize the training matrix to have input values between 0-1
   train.normalizeCols();
+
+  neuralNetwork(train, target, hidden_nodes);
 
 
 
@@ -142,9 +148,9 @@ void setWeights(Matrix *weights){
 /*
 *sigmoid function for the Neural Network
 */
-double sigmoid(int val){
+double sigmoid(double val){
 
-  return 1.0/(1.0 + exp(-4.0 * x));
+  return 1.0/(1.0 + exp(-4.0 * val));
 
 }
 
@@ -154,14 +160,44 @@ double sigmoid(int val){
 void neuralNetwork(Matrix train, Matrix target, int hidden){
   Matrix weight1; //weight matrix between inputs and hidden nodes
   Matrix weight2; //weight matrix between hidden nodes and output nodes
+  Matrix activations_h, activations_o;
 
   weight1 = new Matrix(train.numCols(), hidden);
   weight2 = new Matrix(hidden, target.numCols());
 
-  setWeights(weight1);
-  setWeights(weight2);
+  setWeights(&weight1);
+  setWeights(&weight2);
+
+  for(int i = 0; i < TRAINING_ITERATIONS; i++){
+    activations_h = train.dot(weight1);
+    activations_h.map(sigmoid);
+
+    Matrix activationBias_h = new Matrix(activations_h.numCols()+1, activations_h.numRows());
+    addBias(&activationBias_h, activations_h);
+
+    activations_o = activationBias_h.dot(weight2);
+    activations_o.map(sigmoid);
+
+    
 
 
+  }
+
+}
+
+void addBias(Matrix* bias, Matrix original){
+
+  for(int r = 0; r < bias->numRows(); r++){
+    for(int c = 0; c < bias->numCols(); c++){
+      if(c == 0){
+        bias->set(r,c,-1.0);
+        continue;
+      }
+      double element;
+      element = original.get(r,c-1);
+      bias->set(r,c, element);
+    }
+  }
 
 
 }

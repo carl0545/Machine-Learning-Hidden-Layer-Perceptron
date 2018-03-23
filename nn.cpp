@@ -11,16 +11,17 @@
 
 using namespace std;
 
-const int TRAINING_ITERATIONS = 1;
-const double LEARNING_RATE = .1;
+const int TRAINING_ITERATIONS = 1000;
+const double ETA = .1;
 
 void setBasics(int*, int*, int*, int*); //Function reads in total inputs, rows and column for the matrix from stdin
-void setValuesf(Matrix*, bool); //Function sets the elements of the matrix from stdin
+void setValuesf(Matrix*, bool, bool); //Function sets the elements of the matrix from stdin
 void setTargetValues(Matrix*, Matrix); //Function grabs the target values from the training matrix and assigns them to the target matrix
-void neuralNetwork(Matrix, Matrix, int);//Multilayer Neural Network algorithm
+void neuralNetwork(Matrix, Matrix, Matrix, int);//Multilayer Neural Network algorithm
 void setWeights(Matrix*);//Sets random values to the weight matrix
 void addBias(Matrix* bias, Matrix original);//add a bias column to a matrix
 double sigmoid(int);//sigmoid function for the neural network
+double threshold(double val); //calculates whether to fire or not fire
 
 
 int main(){
@@ -38,14 +39,15 @@ int main(){
   setBasics(&train_inputs, &train_rows, &train_cols, &hidden_nodes);
   train_cols++; //bias
   train = new Matrix(train_rows, train_cols, "train");
-  setValuesf(&train, true);
+  setValuesf(&train, true, true);
+
 
 
   ///Testing Matrix
   setBasics(NULL, &test_rows, &test_cols, NULL);
   test_cols++; //bias
   test = new Matrix(test_rows, test_cols, "test");
-  setValuesf(&test, true);
+  setValuesf(&test, true, false);
 
   ///Target Matrix
   target_cols = train_cols - test_cols;
@@ -62,7 +64,7 @@ int main(){
   //Normalize the training matrix to have input values between 0-1
   train.normalizeCols();
 
-  neuralNetwork(train, target, hidden_nodes);
+  neuralNetwork(train, target, test, hidden_nodes);
 
 
 
@@ -88,7 +90,7 @@ void setBasics(int *input, int *rows, int *cols, int *hidden){
 /*
 *Function sets the elements of the matrix from stdin
 */
-void setValuesf(Matrix *m, bool bias){
+void setValuesf(Matrix *m, bool bias, bool input){
 
   if(bias){
     for(int r = 0; r < m->numRows(); r++){
@@ -141,7 +143,7 @@ void setTargetValues(Matrix *target, Matrix training){
 */
 void setWeights(Matrix *weights){
 
-  weights->rand(-.02,.05);
+  weights->rand(-.05,.05);
 
 }
 
@@ -150,14 +152,14 @@ void setWeights(Matrix *weights){
 */
 double sigmoid(double val){
 
-  return 1.0/(1.0 + exp(-4.0 * val));
+  return (1.0/(1.0 + exp(-4.0 * val)));
 
 }
 
 /*
 *
 */
-void neuralNetwork(Matrix train, Matrix target, int hidden){
+void neuralNetwork(Matrix train, Matrix target, Matrix test, int hidden){
   Matrix weight1; //weight matrix between inputs and hidden nodes
   Matrix weight2; //weight matrix between hidden nodes and output nodes
   Matrix activations_h, activations_o;
@@ -168,7 +170,9 @@ void neuralNetwork(Matrix train, Matrix target, int hidden){
   setWeights(&weight1);
   setWeights(&weight2);
 
+
   for(int i = 0; i < TRAINING_ITERATIONS; i++){
+
     activations_h = train.dot(weight1);
     activations_h.map(sigmoid);
 
@@ -181,8 +185,66 @@ void neuralNetwork(Matrix train, Matrix target, int hidden){
     activations_o.map(sigmoid);
 
 
+    ////Back Propogate
+    Matrix delta_o, delta_h, update_w1, update_w2;
+
+    delta_o = new Matrix((Matrix(target).sub(activations_o)).mult(activations_o).mult(Matrix(activations_o).scalarPreSub(1.0)));
+    delta_h = new Matrix((Matrix(activationBias_h).mult(Matrix(activationBias_h).scalarPreSub(1.0)).mult(Matrix(delta_o).dotT(weight2))));
+
+
+    delta_h.narrow(delta_h.numCols()-1);
+
+    update_w1 = new Matrix((train.Tdot(delta_h)).scalarMult(ETA));
+    update_w2 = new Matrix((activationBias_h.Tdot(delta_o)).scalarMult(ETA));
+
+
+    weight1.add(update_w1);
+    weight2.add(update_w2);
+
+
+
+
 
   }
+
+  Matrix newTest = Matrix(test);
+
+  newTest.normalizeCols();
+
+  activations_h = test.dot(weight1);
+  activations_h.map(sigmoid);
+
+  Matrix activationBias_h = new Matrix(activations_h.numRows(), activations_h.numCols()+1);
+  addBias(&activationBias_h, activations_h);
+
+  activations_o = activationBias_h.dot(weight2);
+  activations_o.map(sigmoid);
+
+  activations_o.map(threshold);
+
+  cout << "FINAL: " << endl;
+  activations_o.print();
+
+
+
+
+
+
+
+}
+/*
+*Threshold function utlilized within the perceptronAlg function
+* Returns 1 if above zero, or returns 0 if not
+*/
+double threshold(double val){
+
+  if(val <= .5){
+    return 0;
+  }
+  else{
+    return 1.0;
+  }
+
 
 }
 
@@ -190,12 +252,12 @@ void addBias(Matrix* bias, Matrix original){
 
   for(int r = 0; r < bias->numRows(); r++){
     for(int c = 0; c < bias->numCols(); c++){
-      if(c == 0){
+      if(c == bias->numCols()-1){
         bias->set(r,c,-1.0);
         continue;
       }
       double element;
-      element = original.get(r,c-1);
+      element = original.get(r,c);
       bias->set(r,c, element);
     }
   }
